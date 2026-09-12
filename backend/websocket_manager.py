@@ -6,14 +6,22 @@ from typing import Dict, Set
 import redis.asyncio as aioredis
 from fastapi import WebSocket
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+REDIS_URL = os.getenv("REDIS_URL", "").strip()
 
 _redis: aioredis.Redis | None = None
 
 
 async def init_redis():
     global _redis
-    _redis = aioredis.from_url(REDIS_URL, decode_responses=True)
+    if not REDIS_URL:
+        _redis = None
+        return
+    try:
+        client = aioredis.from_url(REDIS_URL, decode_responses=True)
+        await client.ping()
+        _redis = client
+    except Exception:
+        _redis = None
 
 
 async def close_redis():

@@ -55,28 +55,7 @@ def add_contact(
     return contact
 
 
-@router.delete("/{contact_id}")
-def remove_contact(
-    contact_id: int,
-    current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    contact = (
-        db.query(models.Contact)
-        .filter(
-            models.Contact.id == contact_id,
-            models.Contact.user_id == current_user.id,
-        )
-        .first()
-    )
-    if not contact:
-        raise HTTPException(status_code=404, detail="Contact not found")
-    db.delete(contact)
-    db.commit()
-    return {"detail": "Contact removed"}
-
-
-@router.get("/search")
+@router.get("/search", response_model=List[schemas.UserOut])
 def search_users(
     q: str,
     current_user: models.User = Depends(get_current_user),
@@ -96,3 +75,24 @@ def search_users(
         .all()
     )
     return users
+
+
+@router.delete("/{contact_id}")
+def remove_contact(
+    contact_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    contact = (
+        db.query(models.Contact)
+        .filter(
+            models.Contact.id == contact_id,
+            models.Contact.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    db.delete(contact)
+    db.commit()
+    return {"detail": "Contact removed"}

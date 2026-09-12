@@ -3,6 +3,7 @@
 A functional Signal Messenger clone built with Next.js 16 + FastAPI + SQLite + WebSockets + Redis pub/sub.
 
 ---
+**Live:** https://signal-clone-gold.vercel.app/
 
 ## Quick Start
 

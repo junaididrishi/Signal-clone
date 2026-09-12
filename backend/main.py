@@ -25,13 +25,21 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Signal Clone API", lifespan=lifespan)
 
-_cors_origins = os.getenv(
-    "CORS_ORIGINS", "http://localhost:3000,http://localhost:3001"
-).split(",")
+_cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS", "http://localhost:3000,http://localhost:3001"
+    ).split(",")
+    if origin.strip()
+]
+_vercel_url = os.getenv("VERCEL_URL")
+if _vercel_url:
+    _cors_origins.append(f"https://{_vercel_url}")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,9 +49,10 @@ app.include_router(auth.router)
 app.include_router(contacts.router)
 app.include_router(conversations.router)
 
-# Serve uploaded files
-os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# Serve uploaded files (writable on Vercel only under /tmp)
+_upload_dir = "/tmp/uploads" if os.getenv("VERCEL") else "uploads"
+os.makedirs(_upload_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=_upload_dir), name="uploads")
 
 
 @app.get("/")
